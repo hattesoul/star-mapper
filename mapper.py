@@ -4,7 +4,7 @@
 
 # to do:
 # * get script running (✅ 2020-10-20)
-# * implement default output folder
+# * implement default output folder (✅ 2020-10-20)
 
 # Parser for command-line options, arguments and sub-commands
 import argparse
@@ -24,7 +24,7 @@ def str2bool(v):
 class Formatter(argparse.ArgumentDefaultsHelpFormatter, argparse.RawDescriptionHelpFormatter):
     pass
 parser = argparse.ArgumentParser(
-    description='Map FASTQ reads to genome data.\nE.g.:\n  mapper.py -s /path/to/STAR/binary -f "/path/to/fastq/files -g /path/to/genome/index -o /output/path -z True -t True -c True -r 8 -v True',
+    description='Map FASTQ reads to genome data.\nE.g.:\n  mapper.py -s "/path/to/STAR/binary" -f "/path/to/fastq/files -g "/path/to/genome/index" -o "/output/path" -z True -t True -c True -r 8 -v True',
     formatter_class=Formatter)
 parser.add_argument(
     '-s', '--STARPath',
@@ -40,7 +40,7 @@ parser.add_argument(
     help='set path to the folder that contains the genome indices')
 parser.add_argument(
     '-o', '--output',
-    default='mappings',
+    default='.',
     help='set output folder')
 parser.add_argument(
     '-z', '--gzipped',
@@ -119,9 +119,12 @@ for item in fileList:
         counter['all'] += 1
         files[str(item)] = '"' + arguments.STARPath + '"' \
             ' --genomeDir "' + arguments.genomePath + '"' + \
-            ' --readFilesIn "' + arguments.fastqPath + '/' + item.name + '"' + \
-            ' --outFileNamePrefix "' + arguments.output + '/' + re.match('(.*)\.fastq.*', item.name).group(1) + '/"' \
+            ' --readFilesIn "' + str(item) + '"' + \
             ' --runThreadN ' + str(arguments.threads)
+        if arguments.output == '.':
+            files[str(item)] += ' --outFileNamePrefix "' + str(item.parent) + '/mappings/' + re.match('(.*)\.fastq.*', str(item.name)).group(1) + '/"'
+        else:
+            files[str(item)] += ' --outFileNamePrefix "' + arguments.output + '/' + re.match('(.*)\.fastq.*', item.name).group(1) + '/"'
         if arguments.gzipped:
             files[str(item)] += ' --readFilesCommand zcat'
         if arguments.transcriptCoordinates or arguments.geneCount:
